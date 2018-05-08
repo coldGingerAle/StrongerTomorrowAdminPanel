@@ -1,0 +1,29 @@
+# Official framework image. Look for the different tagged releases at:
+# https://hub.docker.com/r/library/node/tags/
+image: node:7
+
+before_script:
+# install ssh-agent
+- 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+
+# run ssh-agent
+- eval $(ssh-agent -s)
+
+# add ssh key stored in SSH_PRIVATE_KEY variable to the agent store
+- ssh-add <(echo "$SSH_STAGE_PRIVATE_KEY")
+
+# disable host key checking (NOTE: makes you susceptible to man-in-the-middle attacks)
+# WARNING: use only in docker container, if you use it with shell you will overwrite your user's ssh config
+- mkdir -p ~/.ssh
+- echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+
+# This folder is cached between builds
+# http://docs.gitlab.com/ce/ci/yaml/README.html#cache
+cache:
+  paths:
+    - node_modules/
+
+Deploy Stage Server:
+  script:
+  # try to connect to GitLab.com
+  - ssh root@138.197.45.100 "cd adminclient && git pull git@gitlab.techclub.nyc:astrongertomorrow/adminclient.git"
